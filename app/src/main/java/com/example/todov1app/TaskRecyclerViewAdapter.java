@@ -4,31 +4,34 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-// Manage a list of objects and create each row for the RecyclerView
 public class TaskRecyclerViewAdapter extends RecyclerView.Adapter<TaskRecyclerViewAdapter.ViewHolder> {
 
     private List<Task> mData;
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
     private ItemLongClickListener mLongClickListener;
+    private DetailsButtonClickListener mDetailsButtonClickListener;
+    private Context mContext;
 
-    // 'data' is passed into the constructor
-    // it refers to the list of objects showing in the recycler view
+    public interface DetailsButtonClickListener {
+        void onDetailsButtonClick(View view, int position);
+    }
+
     TaskRecyclerViewAdapter(Context context, List<Task> data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
+        this.mContext = context;
     }
 
-    // inflates the row layout from xml when needed
-    // each row () is a viewHolder
-    // this method creates and initialize, but no data is added
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -36,29 +39,31 @@ public class TaskRecyclerViewAdapter extends RecyclerView.Adapter<TaskRecyclerVi
         return new ViewHolder(view);
     }
 
-    // The view for the row is created (holder); now you may manipulate the view
-    // binds the data to the TextView in each row
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        String label = mData.get(position).getName();
-        holder.myTextView.setText(label);
+        Task currentTask = mData.get(position);
+        holder.myTextView.setText(currentTask.getName());
+
+        holder.detailsButton.setOnClickListener(v -> {
+            if (mDetailsButtonClickListener != null) {
+                mDetailsButtonClickListener.onDetailsButtonClick(v, holder.getAdapterPosition());
+            }
+        });
     }
 
-    // total number of rows
     @Override
     public int getItemCount() {
         return mData.size();
     }
 
-
-    // Provide a reference to the type of views that you are using
-    // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         TextView myTextView;
+        Button detailsButton;
 
         ViewHolder(View itemView) {
             super(itemView);
             myTextView = itemView.findViewById(R.id.itemTextView);
+            detailsButton = itemView.findViewById(R.id.detailsButton);
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
         }
@@ -78,22 +83,22 @@ public class TaskRecyclerViewAdapter extends RecyclerView.Adapter<TaskRecyclerVi
         }
     }
 
-    // convenience method for getting data at click position
     Task getItem(int id) {
         return mData.get(id);
     }
 
-    // allows clicks events to be caught
     void setClickListener(ItemClickListener itemClickListener) {
         this.mClickListener = itemClickListener;
     }
 
-    // allows long clicks events
     void setLongClickListener(ItemLongClickListener itemLongClickListener) {
         this.mLongClickListener = itemLongClickListener;
     }
 
-    // parent activity will implement this method to respond to click events
+    void setDetailsButtonClickListener(DetailsButtonClickListener listener) {
+        this.mDetailsButtonClickListener = listener;
+    }
+
     public interface ItemClickListener {
         void onItemClick(View view, int position);
     }
